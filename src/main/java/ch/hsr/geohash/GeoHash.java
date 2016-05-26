@@ -1,10 +1,10 @@
 /*
  * Copyright 2010, Silvio Heuberger @ IFS www.ifs.hsr.ch
  *
- * This code is release under the LGPL license.
+ * This code is release under the Apache License 2.0.
  * You should have received a copy of the license
  * in the LICENSE file. If you have not, see
- * http://www.gnu.org/licenses/lgpl-3.0.txt
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package ch.hsr.geohash;
 
@@ -12,8 +12,11 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({ "JavaDoc" })
+@SuppressWarnings("javadoc")
 public final class GeoHash implements Comparable<GeoHash>, Serializable {
+	private static final int MAX_BIT_PRECISION = 64;
+	private static final int MAX_CHARACTER_PRECISION = 12;
+	
 	private static final long serialVersionUID = -8553214249630252175L;
 	private static final int[] BITS = { 16, 8, 4, 2, 1 };
 	private static final int BASE32_BITS = 5;
@@ -21,7 +24,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	private static final char[] base32 = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'b', 'c', 'd', 'e', 'f',
 			'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
-	private final static Map<Character, Integer> decodeMap = new HashMap<Character, Integer>();
+	private final static Map<Character, Integer> decodeMap = new HashMap<>();
 
 	static {
 		int sz = base32.length;
@@ -46,6 +49,9 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	 * characters can be achieved.
 	 */
 	public static GeoHash withCharacterPrecision(double latitude, double longitude, int numberOfCharacters) {
+		if (numberOfCharacters > MAX_CHARACTER_PRECISION) {
+			throw new IllegalArgumentException("A geohash can only be " + MAX_CHARACTER_PRECISION + " character long.");
+		}
 		int desiredPrecision = (numberOfCharacters * 5 <= 60) ? numberOfCharacters * 5 : 60;
 		return new GeoHash(latitude, longitude, desiredPrecision);
 	}
@@ -55,6 +61,9 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	 * at the same time defines this hash's bounding box.
 	 */
 	public static GeoHash withBitPrecision(double latitude, double longitude, int numberOfBits) {
+		if (numberOfBits > MAX_BIT_PRECISION) {
+			throw new IllegalArgumentException("A Geohash can only be " + MAX_BIT_PRECISION + " bits long!");
+		}
 		if (Math.abs(latitude) > 90.0 || Math.abs(longitude) > 180.0) {
 			throw new IllegalArgumentException("Can't have lat/lon values out of (-90,90)/(-180/180)");
 		}
@@ -72,7 +81,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 				throw new IllegalArgumentException(binaryString + " is not a valid geohash as a binary string");
 			}
 		}
-		geohash.bits <<= (64 - geohash.significantBits);
+		geohash.bits <<= (MAX_BIT_PRECISION - geohash.significantBits);
 		long[] latitudeBits = geohash.getRightAlignedLatitudeBits();
 		long[] longitudeBits = geohash.getRightAlignedLongitudeBits();
 		return geohash.recombineLatLonBitsToHash(latitudeBits, longitudeBits);
@@ -108,7 +117,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 
 		hash.point = new WGS84Point(latitude, longitude);
 		setBoundingBox(hash, latitudeRange, longitudeRange);
-		hash.bits <<= (64 - hash.significantBits);
+		hash.bits <<= (MAX_BIT_PRECISION - hash.significantBits);
 		return hash;
 	}
 
@@ -120,7 +129,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 		GeoHash hash = new GeoHash();
 
 		String binaryString = Long.toBinaryString(hashVal);
-		while (binaryString.length() < 64) {
+		while (binaryString.length() < MAX_BIT_PRECISION) {
 			binaryString = "0" + binaryString;
 		}
 		for (int j = 0; j < significantBits; j++) {
@@ -137,13 +146,23 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 
 		hash.point = new WGS84Point(latitude, longitude);
 		setBoundingBox(hash, latitudeRange, longitudeRange);
-		hash.bits <<= (64 - hash.significantBits);
+		hash.bits <<= (MAX_BIT_PRECISION - hash.significantBits);
 		return hash;
+	}
+
+	/**
+	 * This method uses the given number of characters as the desired precision
+	 * value. The hash can only be 64bits long, thus a maximum precision of 12
+	 * characters can be achieved.
+	 */
+	public static String geoHashStringWithCharacterPrecision(double latitude, double longitude, int numberOfCharacters) {
+		GeoHash hash = withCharacterPrecision(latitude, longitude, numberOfCharacters);
+		return hash.toBase32();
 	}
 
 	private GeoHash(double latitude, double longitude, int desiredPrecision) {
 		point = new WGS84Point(latitude, longitude);
-		desiredPrecision = Math.min(desiredPrecision, 64);
+		desiredPrecision = Math.min(desiredPrecision, MAX_BIT_PRECISION);
 
 		boolean isEvenBit = true;
 		double[] latitudeRange = { -90, 90 };
@@ -159,7 +178,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 		}
 
 		setBoundingBox(this, latitudeRange, longitudeRange);
-		bits <<= (64 - desiredPrecision);
+		bits <<= (MAX_BIT_PRECISION - desiredPrecision);
 	}
 
 	private static void setBoundingBox(GeoHash hash, double[] latitudeRange, double[] longitudeRange) {
@@ -181,12 +200,27 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	}
 
 	public long ord() {
-		int insignificantBits = 64 - significantBits;
-		return bits >> insignificantBits;
+		int insignificantBits = MAX_BIT_PRECISION - significantBits;
+		return bits >>> insignificantBits;
+	}
+
+	/**
+	 * Returns the number of characters that represent this hash.
+	 * 
+	 * @throws IllegalStateException
+	 *             when the hash cannot be encoded in base32, i.e. when the
+	 *             precision is not a multiple of 5.
+	 */
+	public int getCharacterPrecision() {
+		if (significantBits % 5 != 0) {
+			throw new IllegalStateException(
+					"precision of GeoHash is not divisble by 5: " + this);
+		}
+		return significantBits / 5;
 	}
 
 	public static GeoHash fromOrd(long ord, int significantBits) {
-		int insignificantBits = 64 - significantBits;
+		int insignificantBits = MAX_BIT_PRECISION - significantBits;
 		return fromLongValue(ord << insignificantBits, significantBits);
 	}
 
@@ -259,10 +293,13 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	 * get the base32 string for this {@link GeoHash}.<br>
 	 * this method only makes sense, if this hash has a multiple of 5
 	 * significant bits.
+	 * 
+	 * @throws IllegalStateException
+	 *             when the number of significant bits is not a multiple of 5.
 	 */
 	public String toBase32() {
 		if (significantBits % 5 != 0) {
-			return "";
+			throw new IllegalStateException("Cannot convert a geohash to base32 if the precision is not a multiple of 5.");
 		}
 		StringBuilder buf = new StringBuilder();
 
@@ -323,8 +360,8 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 	protected GeoHash recombineLatLonBitsToHash(long[] latBits, long[] lonBits) {
 		GeoHash hash = new GeoHash();
 		boolean isEvenBit = false;
-		latBits[0] <<= (64 - latBits[1]);
-		lonBits[0] <<= (64 - lonBits[1]);
+		latBits[0] <<= (MAX_BIT_PRECISION - latBits[1]);
+		lonBits[0] <<= (MAX_BIT_PRECISION - lonBits[1]);
 		double[] latitudeRange = { -90.0, 90.0 };
 		double[] longitudeRange = { -180.0, 180.0 };
 
@@ -338,7 +375,7 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 			}
 			isEvenBit = !isEvenBit;
 		}
-		hash.bits <<= (64 - hash.significantBits);
+		hash.bits <<= (MAX_BIT_PRECISION - hash.significantBits);
 		setBoundingBox(hash, latitudeRange, longitudeRange);
 		hash.point = hash.boundingBox.getCenterPoint();
 		return hash;
@@ -480,12 +517,17 @@ public final class GeoHash implements Comparable<GeoHash>, Serializable {
 
 	private long maskLastNBits(long value, long n) {
 		long mask = 0xffffffffffffffffl;
-		mask >>>= (64 - n);
+		mask >>>= (MAX_BIT_PRECISION - n);
 		return value & mask;
 	}
 
 	@Override
 	public int compareTo(GeoHash o) {
-		return new Long(bits).compareTo(o.bits);
+		int bitsCmp = Long.compare(bits ^ FIRST_BIT_FLAGGED, o.bits ^ FIRST_BIT_FLAGGED);
+		if (bitsCmp != 0) {
+			return bitsCmp;
+		} else {
+			return Integer.compare(significantBits, o.significantBits);
+		}
 	}
 }

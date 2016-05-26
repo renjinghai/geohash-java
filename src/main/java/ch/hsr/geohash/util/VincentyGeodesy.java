@@ -1,10 +1,10 @@
 /*
  * Copyright 2010, Silvio Heuberger @ IFS www.ifs.hsr.ch
  *
- * This code is release under the LGPL license.
+ * This code is release under the Apache License 2.0.
  * You should have received a copy of the license
  * in the LICENSE file. If you have not, see
- * http://www.gnu.org/licenses/lgpl-3.0.txt
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package ch.hsr.geohash.util;
 
@@ -25,8 +25,10 @@ public class VincentyGeodesy {
 	 * following distance of the given point.<br>
 	 * Uses Vincenty's formula and the WGS84 ellipsoid.
 	 * 
-	 * @param directionInDegrees
+	 * @param bearingInDegrees
 	 *            : must be within 0 and 360
+	 * @param point : where to start
+	 * @param distanceInMeters: How far to move in the given direction
 	 */
 	public static WGS84Point moveInDirection(WGS84Point point, double bearingInDegrees, double distanceInMeters) {
 
@@ -74,10 +76,10 @@ public class VincentyGeodesy {
 
 		double newLat = lat2 / degToRad;
 		double newLon = point.getLongitude() + L / degToRad;
-		
-		newLon = (newLon >  180.0 ? 360.0 - newLon : newLon);
+
+		newLon = (newLon > 180.0 ? 360.0 - newLon : newLon);
 		newLon = (newLon < -180.0 ? 360.0 + newLon : newLon);
-		
+
 		return new WGS84Point(newLat, newLon);
 	}
 

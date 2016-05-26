@@ -1,10 +1,10 @@
 /*
  * Copyright 2010, Silvio Heuberger @ IFS www.ifs.hsr.ch
  *
- * This code is release under the LGPL license.
+ * This code is release under the Apache License 2.0.
  * You should have received a copy of the license
  * in the LICENSE file. If you have not, see
- * http://www.gnu.org/licenses/lgpl-3.0.txt
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package ch.hsr.geohash.queries;
 
@@ -25,7 +25,7 @@ import ch.hsr.geohash.util.GeoHashSizeTable;
 public class GeoHashBoundingBoxQuery implements GeoHashQuery, Serializable {
 	private static final long serialVersionUID = 9223256928940522683L;
 	/* there's not going to be more than 4 hashes. */
-	private List<GeoHash> searchHashes = new ArrayList<GeoHash>(4);
+	private List<GeoHash> searchHashes = new ArrayList<>(4);
 	/* the combined bounding box of those hashes. */
 	private BoundingBox boundingBox;
 

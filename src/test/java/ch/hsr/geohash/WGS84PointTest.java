@@ -1,17 +1,16 @@
 /*
  * Copyright 2010, Silvio Heuberger @ IFS www.ifs.hsr.ch
  *
- * This code is release under the LGPL license.
+ * This code is release under the Apache License 2.0.
  * You should have received a copy of the license
  * in the LICENSE file. If you have not, see
- * http://www.gnu.org/licenses/lgpl-3.0.txt
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package ch.hsr.geohash;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
-import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,17 +39,17 @@ public class WGS84PointTest {
 		int distanceInMeters = 10000;
 		WGS84Point result = VincentyGeodesy.moveInDirection(startPoint, 120,
 				distanceInMeters);
-		Assert.assertEquals(40.10134882, result.getLongitude(), DELTA);
-		Assert.assertEquals(39.9549245, result.getLatitude(), DELTA);
+		assertEquals(40.10134882, result.getLongitude(), DELTA);
+		assertEquals(39.9549245, result.getLatitude(), DELTA);
 
-		Assert.assertEquals(distanceInMeters, VincentyGeodesy.distanceInMeters(
+		assertEquals(distanceInMeters, VincentyGeodesy.distanceInMeters(
 				startPoint, result), DELTA);
 
 		WGS84Point p1 = new WGS84Point(1, 1);
 		int tenThousandKilometers = 10000000;
 		WGS84Point p2 = VincentyGeodesy.moveInDirection(p1, 270, tenThousandKilometers);
 		System.out.println(p2);
-		Assert.assertEquals(tenThousandKilometers, VincentyGeodesy.distanceInMeters(p1, p2), DELTA);
+		assertEquals(tenThousandKilometers, VincentyGeodesy.distanceInMeters(p1, p2), DELTA);
 	}
 
 	@Test
